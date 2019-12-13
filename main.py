@@ -39,16 +39,22 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                     for d in range(self._num_days):
                         if self.Value(self._shifts[(n, d, 0)]):
                             row_shifts.append('X')
+                            # print('%s day %i X' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 1)]):
                             row_shifts.append('A')
+                            # print('%s day %i A' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 2)]):
                             row_shifts.append('P')
+                            # print('%s day %i P' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 3)]):
                             row_shifts.append('출장')
+                            # print('%s day %i 출장' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 4)]):
                             row_shifts.append('교육')
+                            # print('%s day %i 교육' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 5)]):
                             row_shifts.append('연차')
+                            # print('%s day %i 연차' % (names[n], d))
                     employee_writer.writerow(row_shifts)
                 
         self._solution_count += 1
@@ -61,7 +67,7 @@ def main():
     num_members = len(names)
     num_veterans = len(veterans)
     max_days = 5
-    min_shifts_per_member = 7
+    min_shifts_per_member = 20
     max_shifts_per_member = 22
     num_categories = len(categories)
 
@@ -69,6 +75,7 @@ def main():
     veteran_members = range(num_veterans)
     all_days = range(num_days)
     all_categories = range(num_categories)
+    worked_categories = range(1, num_categories)
 
     model = cp_model.CpModel()
 
@@ -80,10 +87,10 @@ def main():
                 requests[(n, d, s)] = 0
     
     # request here / [(names, days, categories)]
-    requests[(1, 15, 1)] = 1
-    requests[(1, 16, 3)] = 1
-    requests[(1, 17, 4)] = 1
-    requests[(1, 18, 5)] = 1
+    requests[(1, 0, 1)] = 1
+    requests[(1, 1, 3)] = 1
+    requests[(1, 2, 4)] = 1
+    requests[(1, 3, 5)] = 1
     requests[(0, 0, 5)] = 1
     requests[(0, 1, 5)] = 1
     requests[(0, 2, 5)] = 1
@@ -117,8 +124,8 @@ def main():
             # members work only 1 time on each shift
             model.Add(shifts[(n, d, 1)] <= 1)
             model.Add(shifts[(n, d, 2)] <= 1)
-            # members work only 1 shift a day
-            model.Add((shifts[(n, d, 1)] + shifts[(n, d, 2)]) <= 1)
+            # members work only 1 category of shift a day
+            model.Add(sum(shifts[(n, d, s)] for s in all_categories) <= 1)
             # members can not work shift P and A consecutively
             if d < num_days - 1:
                 model.Add((shifts[(n, d, 2)] + shifts[(n, d + 1, 1)]) < 2)
@@ -128,20 +135,22 @@ def main():
                 for i in range(0, max_days):
                     sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)]
                 model.Add(sum_worked_days < max_days)
+            # in 2 weeks, members work at most 10 days
+            if d < num_days - 14:
+                sum_worked_days = 0
+                for i in range(0, 14):
+                    sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)]
+                model.Add(sum_worked_days <= 10)
 
     for n in all_members:
-        num_shiftsX_worked = sum(shifts[(n, d, 0)] for d in all_days)
-        num_shiftsA_worked = sum(shifts[(n, d, 1)] for d in all_days)
-        num_shiftsP_worked = sum(shifts[(n, d, 2)] for d in all_days)
-        model.Add(min_shifts_per_member <= num_shiftsX_worked)
-        model.Add(min_shifts_per_member <= num_shiftsA_worked)
-        model.Add(min_shifts_per_member <= num_shiftsP_worked)
-        model.Add(num_shiftsX_worked <= max_shifts_per_member)
-        model.Add(num_shiftsA_worked <= max_shifts_per_member)
-        model.Add(num_shiftsP_worked <= max_shifts_per_member)
+        # minimum working days: all categories except X take up at least 20 days
+        model.Add(min_shifts_per_member <= sum(shifts[(n, d, s)] for d in all_days for s in worked_categories))
+        # maximum working days: all working categories take up at most 22 days
+        model.Add(sum(shifts[(n, d, 0)] for d in all_days) <= max_shifts_per_member)
+        model.Add(sum(shifts[(n, d, 1)] for d in all_days) <= max_shifts_per_member)
+        model.Add(sum(shifts[(n, d, 2)] for d in all_days) <= max_shifts_per_member)
         # all days are required to be scheduled
-        num_days_scheduled = sum(shifts[(n, d, s)] for d in all_days for s in all_categories)
-        model.Add(num_days_scheduled == num_days)
+        model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_categories) == num_days)
         # 출장 = 3, should exactly match the number requested
         model.Add(sum(shifts[(n, d, 3)] for d in all_days) == sum(requests[(n, d, 3)] for d in all_days))
         # 교육 = 4, should exactly match the number requested
@@ -149,72 +158,30 @@ def main():
         # 연차 = 5, should exactly match the number requested
         model.Add(sum(shifts[(n, d, 5)] for d in all_days) == sum(requests[(n, d, 5)] for d in all_days))
 
-    for n in all_members:
-        for d in all_days:
-            for s in all_categories:
-                if requests[(n, d, s)] > 0:
-                    model.Add(shifts[(n, d, s)] == 1)
+    # special requests
+    # 양혜경 wants all P shifts, in other words no A shifts
+    model.Add(sum(shifts[(4, d, 1)] for d in all_days) == 0)
 
-    # max_condition = 0
-    # for n in all_members:
-    #     for d in all_days:
-    #         for s in all_categories:
-    #             left = requests[(n, d, s)]
-    #             # left = requests_dummy[n][d][s]
-    #             right = shifts[(n, d, s)]
-    #             max_condition = max_condition + left * right
-    # # max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
-    # model.Maximize(max_condition)
+    max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
+    model.Maximize(max_condition)
 
     solver = cp_model.CpSolver()
-    solver.parameters.linearization_level = 0
+    # solver.parameters.linearization_level = 1
+    solver.parameters.max_time_in_seconds = 30.0
     a_few_solutions = range(5)
     solution_printer = MembersPartialSolutionPrinter(
         shifts, num_members, num_days, a_few_solutions, names
     )
-    solver.SearchForAllSolutions(model, solution_printer)
+    # solver.SearchForAllSolutions(model, solution_printer)
+    solver.SolveWithSolutionCallback(model, solution_printer)
 
     print()
     print('Statistics')
     print(' - conflicts             : %i' % solver.NumConflicts())
+    print(' - shift requests met    : %i' % solver.ObjectiveValue())
     print(' - branches              : %i' % solver.NumBranches())
     print(' - wall time             : %f s' % solver.WallTime())
     print(' - solutions found       : %i' % solution_printer.solution_count())
     
-    # solver.Solve(model)
-
-    # with open('employee_file.csv', mode='w') as employee_file:
-    #     employee_writer = csv.writer(
-    #         employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL
-    #     )
-    #     days = list(range(1, num_days + 1))
-    #     days.insert(0, ' ')
-    #     employee_writer.writerow(days)
-
-    #     for n in all_members:
-    #         row_shifts = []
-    #         row_shifts.append(names[n])
-    #         # python has NO switch statements!
-    #         for d in all_days:
-    #             if solver.Value(shifts[(n, d, 0)]) == 1:
-    #                 row_shifts.append('X')
-    #             if solver.Value(shifts[(n, d, 1)]) == 1:
-    #                 row_shifts.append('A')
-    #             if solver.Value(shifts[(n, d, 2)]) == 1:
-    #                 row_shifts.append('P')
-    #             if solver.Value(shifts[(n, d, 3)]) == 1:
-    #                 row_shifts.append('출장')
-    #             if solver.Value(shifts[(n, d, 4)]) == 1:
-    #                 row_shifts.append('교육')
-    #             if solver.Value(shifts[(n, d, 5)]) == 1:
-    #                 row_shifts.append('연차')
-    #         employee_writer.writerow(row_shifts)
-
-    # Statistics
-    # print()
-    # print('Statistics')
-    # print('  - Number of shift requests met = %i' % solver.ObjectiveValue())
-    # print('  - Wall time : %f s' % solver.WallTime())
-
 if __name__ == '__main__':
     main()
