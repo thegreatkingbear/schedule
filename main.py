@@ -2,6 +2,7 @@ from __future__ import print_function
 from ortools.sat.python import cp_model
 import csv
 
+# names of working members (VETERANS SHOULD BE AT THE LEFT OF ROW)
 names = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경']
 veterans = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희']
 
@@ -30,31 +31,44 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                 )
                 days = list(range(1, self._num_days + 1))
                 days.insert(0, ' ')
-                employee_writer.writerow(days)
-
+                categories_row = categories.copy()
+                categories_row.insert(0, ' ')
+                titles = days + categories_row
+                employee_writer.writerow(titles)
+                
                 for n in range(self._num_members):
                     row_shifts = []
+                    summary = { category: 0 for category in range(len(categories)) } 
                     row_shifts.append(self._names[n])
                     # python has NO switch statements!
                     for d in range(self._num_days):
                         if self.Value(self._shifts[(n, d, 0)]):
                             row_shifts.append('X')
+                            summary[0] += 1
                             # print('%s day %i X' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 1)]):
                             row_shifts.append('A')
+                            summary[1] += 1
                             # print('%s day %i A' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 2)]):
                             row_shifts.append('P')
+                            summary[2] += 1
                             # print('%s day %i P' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 3)]):
                             row_shifts.append('출장')
+                            summary[3] += 1
                             # print('%s day %i 출장' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 4)]):
                             row_shifts.append('교육')
+                            summary[4] += 1
                             # print('%s day %i 교육' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 5)]):
                             row_shifts.append('연차')
+                            summary[5] += 1
                             # print('%s day %i 연차' % (names[n], d))
+                    row_shifts.append(' ')
+                    print(summary)
+                    row_shifts += summary.values()
                     employee_writer.writerow(row_shifts)
                 
         self._solution_count += 1

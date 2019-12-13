@@ -1,9 +1,9 @@
- ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
-박호원,연차,연차,연차,X,X,A,A,A,P,X,A,A,A,P,X,X,X,A,A,P,P,X,P,P,P,P,X,P,X,A,A
-이보람,A,출장,교육,연차,A,P,P,X,A,P,P,P,X,X,P,X,P,P,X,A,P,P,P,X,A,X,P,X,P,P,X
-정형섭,P,P,P,P,X,X,P,X,A,A,A,P,X,A,A,X,A,P,X,X,A,X,A,A,P,X,A,X,A,X,A
-남영선,A,A,A,X,A,A,P,X,A,A,X,X,A,P,X,A,P,X,A,X,A,P,P,X,A,A,X,X,A,X,P
-양혜경,X,P,P,P,P,X,X,P,X,X,X,X,P,P,P,P,X,P,P,P,P,X,X,P,P,X,P,P,P,P,P
-이찬희,A,A,A,A,X,X,A,P,X,A,P,P,X,A,X,A,X,X,P,X,A,A,A,X,X,A,A,A,P,X,A
-이장훈,A,P,X,A,P,P,X,X,A,P,X,A,P,P,X,P,X,A,A,A,X,A,X,A,X,X,A,A,X,A,A
-조인경,P,X,A,A,X,A,A,A,P,X,A,X,X,X,A,A,A,X,A,A,A,P,X,A,X,P,X,A,X,A,A
+ ,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31, ,X,A,P,출장,교육,연차
+박호원,연차,연차,연차,X,X,A,A,A,P,X,A,A,A,P,X,X,X,A,A,P,P,X,P,P,P,P,X,P,X,A,A, ,9,10,9,0,0,3
+이보람,A,출장,교육,연차,A,P,P,X,A,P,P,P,X,X,P,X,P,P,X,A,P,P,P,X,A,X,P,X,P,P,X, ,9,5,14,1,1,1
+정형섭,P,P,P,P,X,X,P,X,A,A,A,P,X,A,A,X,A,P,X,X,A,X,A,A,P,X,A,X,A,X,A, ,11,12,8,0,0,0
+남영선,A,A,A,X,A,A,P,X,A,A,X,X,A,P,X,A,P,X,A,X,A,P,P,X,A,A,X,X,A,X,P, ,11,14,6,0,0,0
+양혜경,X,P,P,P,P,X,X,P,X,X,X,X,P,P,P,P,X,P,P,P,P,X,X,P,P,X,P,P,P,P,P, ,11,0,20,0,0,0
+이찬희,A,A,A,A,X,X,A,P,X,A,P,P,X,A,X,A,X,X,P,X,A,A,A,X,X,A,A,A,P,X,A, ,11,15,5,0,0,0
+이장훈,A,P,X,A,P,P,X,X,A,P,X,A,P,P,X,P,X,A,A,A,X,A,X,A,X,X,A,A,X,A,A, ,11,13,7,0,0,0
+조인경,P,X,A,A,X,A,A,A,P,X,A,X,X,X,A,A,A,X,A,A,A,P,X,A,X,P,X,A,X,A,A, ,11,16,4,0,0,0
