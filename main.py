@@ -25,7 +25,7 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     def on_solution_callback(self):
         if self._solution_count in self._solutions:
             print('Solution %i' % self._solution_count)
-            with open('employee_file{}.csv'.format(self._solution_count), mode='w') as employee_file:
+            with open('employee_file{}.csv'.format(self._solution_count), newline="\n", mode='w', encoding='utf-8') as employee_file:
                 employee_writer = csv.writer(
                     employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL
                 )
