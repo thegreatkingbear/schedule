@@ -100,7 +100,7 @@ def main():
             for s in all_categories:
                 requests[(n, d, s)] = 0
     
-    # request here / [(names, days, categories)]
+    # specific request here / [(names, days, categories)]
     requests[(1, 0, 1)] = 1
     requests[(1, 1, 3)] = 1
     requests[(1, 2, 4)] = 1
@@ -172,9 +172,41 @@ def main():
         # 연차 = 5, should exactly match the number requested
         model.Add(sum(shifts[(n, d, 5)] for d in all_days) == sum(requests[(n, d, 5)] for d in all_days))
 
-    # special requests
+    # special requests '박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경'
+    # like balance between A and P 
+ 
+    # 박호원
+    model.Add(sum(shifts[(0, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(0, d, 2)] for d in all_days) > 7)
+
+    # 이보람
+    model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 7)
+
+    # 정형섭
+    model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 7)
+
+    # 남영선
+    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 7)
+
     # 양혜경 wants all P shifts, in other words no A shifts
     model.Add(sum(shifts[(4, d, 1)] for d in all_days) == 0)
+    # model.Add(sum(shifts[(4, d, 1)] for d in all_days) > 7)
+    # model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 7)
+    
+    # 이찬희
+    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 7)
+
+    # 이장훈
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 7)
+
+    # 조인경
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 7)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 7)
 
     max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
     model.Maximize(max_condition)
