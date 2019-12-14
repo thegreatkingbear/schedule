@@ -35,7 +35,9 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                 categories_row.insert(0, ' ')
                 titles = days + categories_row
                 employee_writer.writerow(titles)
-                
+                shiftsA = { day: 0 for day in range(self._num_days) }
+                shiftsP = { day: 0 for day in range(self._num_days) }
+
                 for n in range(self._num_members):
                     row_shifts = []
                     summary = { category: 0 for category in range(len(categories)) } 
@@ -48,10 +50,12 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                             # print('%s day %i X' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 1)]):
                             row_shifts.append('A')
+                            shiftsA[d] += 1
                             summary[1] += 1
                             # print('%s day %i A' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 2)]):
                             row_shifts.append('P')
+                            shiftsP[d] += 1
                             summary[2] += 1
                             # print('%s day %i P' % (names[n], d))
                         if self.Value(self._shifts[(n, d, 3)]):
@@ -71,6 +75,16 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                     row_shifts += summary.values()
                     employee_writer.writerow(row_shifts)
                 
+                employee_writer.writerow([''])
+                rowA = []
+                rowA.append('A')
+                rowA += shiftsA.values()
+                employee_writer.writerow(rowA)
+                rowP = []
+                rowP.append('P')
+                rowP += shiftsP.values()
+                employee_writer.writerow(rowP)
+
         self._solution_count += 1
 
     def solution_count(self):
@@ -82,7 +96,7 @@ def main():
     num_veterans = len(veterans)
     max_days = 5
     min_shifts_per_member = 20
-    max_shifts_per_member = 22
+    max_shifts_per_member = 20
     num_categories = len(categories)
 
     all_members = range(num_members)
@@ -101,13 +115,32 @@ def main():
                 requests[(n, d, s)] = 0
     
     # specific request here / [(names, days, categories)]
-    requests[(1, 0, 1)] = 1
-    requests[(1, 1, 3)] = 1
-    requests[(1, 2, 4)] = 1
-    requests[(1, 3, 5)] = 1
-    requests[(0, 0, 5)] = 1
-    requests[(0, 1, 5)] = 1
-    requests[(0, 2, 5)] = 1
+    requests[(0, 22, 0)] = 1
+    requests[(0, 23, 0)] = 1
+    requests[(0, 24, 0)] = 1
+    requests[(0, 25, 0)] = 1
+    requests[(0, 26, 0)] = 1
+    requests[(1, 5, 4)] = 1
+    requests[(1, 6, 4)] = 1
+    requests[(1, 7, 4)] = 1
+    requests[(1, 8, 4)] = 1
+    requests[(1, 9, 4)] = 1
+    requests[(3, 5, 4)] = 1
+    requests[(3, 6, 4)] = 1
+    requests[(3, 7, 4)] = 1
+    requests[(3, 8, 4)] = 1
+    requests[(3, 9, 4)] = 1
+    requests[(4, 0, 2)] = 1
+    requests[(4, 20, 5)] = 1
+    requests[(4, 25, 2)] = 1
+    requests[(4, 26, 2)] = 1
+    requests[(5, 10, 5)] = 1
+    requests[(5, 11, 5)] = 1
+    requests[(5, 12, 5)] = 1
+    requests[(5, 13, 0)] = 1
+    requests[(5, 14, 0)] = 1
+    requests[(5, 15, 0)] = 1
+    requests[(5, 16, 0)] = 1
     # for n in all_members:
     #     for d in all_days:
     #         for s in all_categories:
@@ -207,6 +240,11 @@ def main():
     # 조인경
     model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 7)
     model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 7)
+
+    # last day last month P => NO A on the first day 
+    model.Add(shifts[(0, 0, 1)] == 0)
+    model.Add(shifts[(1, 0, 1)] == 0)
+    model.Add(shifts[(3, 0, 1)] == 0)
 
     max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
     model.Maximize(max_condition)
