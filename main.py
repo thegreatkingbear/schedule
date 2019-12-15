@@ -1,6 +1,10 @@
 from __future__ import print_function
 from ortools.sat.python import cp_model
 import csv
+import datetime
+import calendar
+
+first_day = datetime.datetime(2020, 1, 1)
 
 # names of working members (VETERANS SHOULD BE AT THE LEFT OF ROW)
 names = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경']
@@ -10,10 +14,27 @@ veterans = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '�
 # 0 = X, 1 = A, 2 = P, 3 = 출장, 4 = 교육, 5 = 연차, 6 = D
 categories = ['X', 'A', 'P', '출장', '교육', '연차', 'D']
 
+def dayName(weekday):
+    if weekday == 0:
+        return "월"
+    if weekday == 1:
+        return "화"
+    if weekday == 2:
+        return "수"
+    if weekday == 3:
+        return "목"
+    if weekday == 4:
+        return "금"
+    if weekday == 5:
+        return "토"
+    if weekday == 6:
+        return "일"
+
+
 class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions."""
 
-    def __init__(self, shifts, num_members, num_days, sols, names):
+    def __init__(self, shifts, num_members, num_days, sols, names, first_day):
         cp_model.CpSolverSolutionCallback.__init__(self)
         self._shifts = shifts
         self._num_members = num_members
@@ -21,6 +42,7 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
         self._solutions = set(sols)
         self._solution_count = 0
         self._names = names
+        self._first_day = first_day
 
     def on_solution_callback(self):
         if self._solution_count in self._solutions:
@@ -29,11 +51,25 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                 employee_writer = csv.writer(
                     employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL
                 )
-                days = list(range(1, self._num_days + 1))
+                # days = list(range(1, self._num_days + 1))
+                # days = [first_day += datetime.timedelta(days = i) for i in range(0, self._num_days)]
+                days = []
+                weekdays = []
+                the_day = datetime.datetime(self._first_day.year, self._first_day.month, self._first_day.day)
+                i = 0
+                while i < self._num_days:
+                    days.append(the_day.day)
+                    weekdays.append(dayName(the_day.weekday()))
+                    the_day += datetime.timedelta(days = 1)
+                    i += 1
+
                 days.insert(0, ' ')
+                employee_writer.writerow(days)
+
+                weekdays.insert(0, ' ')
                 categories_row = categories.copy()
                 categories_row.insert(0, ' ')
-                titles = days + categories_row
+                titles = weekdays + categories_row
                 employee_writer.writerow(titles)
                 shiftsA = { day: 0 for day in range(self._num_days) }
                 shiftsP = { day: 0 for day in range(self._num_days) }
@@ -93,8 +129,10 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     def solution_count(self):
         return self._solution_count
 
+
+
 def main():
-    num_days = 31
+    num_days = calendar.monthrange(first_day.year, first_day.day)[1]
     num_members = len(names)
     num_veterans = len(veterans)
     num_X = 11
@@ -122,6 +160,7 @@ def main():
     requests[(0, 24, 0)] = 1
     requests[(0, 25, 0)] = 1
     requests[(0, 26, 0)] = 1
+    requests[(1, 0, 0)] = 1
     requests[(1, 5, 4)] = 1
     requests[(1, 6, 4)] = 1
     requests[(1, 7, 4)] = 1
@@ -231,6 +270,12 @@ def main():
     # 이보람
     model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 6)
     model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 6)
+    model.Add(shifts[(1, 3, 2)] == 0)
+    model.Add(shifts[(1, 4, 2)] == 0)
+    model.Add(shifts[(1, 10, 2)] == 0)
+    model.Add(shifts[(1, 11, 2)] == 0)
+    model.Add(shifts[(1, 17, 2)] == 0)
+    model.Add(shifts[(1, 18, 2)] == 0)
 
     # 정형섭
     model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 6)
@@ -275,7 +320,7 @@ def main():
     solver.parameters.max_time_in_seconds = 10.0
     a_few_solutions = range(10)
     solution_printer = MembersPartialSolutionPrinter(
-        shifts, num_members, num_days, a_few_solutions, names
+        shifts, num_members, num_days, a_few_solutions, names, first_day
     )
     solver.SearchForAllSolutions(model, solution_printer)
     # solver.SolveWithSolutionCallback(model, solution_printer)
