@@ -7,8 +7,8 @@ names = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이�
 veterans = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희']
 
 # schedule numbers
-# 0 = X, 1 = A, 2 = P, 3 = 출장, 4 = 교육, 5 = 연차
-categories = ['X', 'A', 'P', '출장', '교육', '연차']
+# 0 = X, 1 = A, 2 = P, 3 = 출장, 4 = 교육, 5 = 연차, 6 = D
+categories = ['X', 'A', 'P', '출장', '교육', '연차', 'D']
 
 class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions."""
@@ -70,6 +70,9 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                             row_shifts.append('연차')
                             summary[5] += 1
                             # print('%s day %i 연차' % (names[n], d))
+                        if self.Value(self._shifts[(n, d, 6)]):
+                            row_shifts.append('D')
+                            summary[6] += 1
                     row_shifts.append('')
                     print(summary)
                     row_shifts += summary.values()
@@ -94,10 +97,8 @@ def main():
     num_days = 31
     num_members = len(names)
     num_veterans = len(veterans)
-    max_days = 5
     num_X = 11
     min_shifts_per_member = num_days - num_X
-    max_shifts_per_member = num_days - num_X 
     num_categories = len(categories)
 
     all_members = range(num_members)
@@ -151,6 +152,7 @@ def main():
     requests[(5, 14, 0)] = 1
     requests[(5, 15, 0)] = 1
     requests[(5, 16, 0)] = 1
+    requests[(6, 9, 6)] = 1
     # for n in all_members:
     #     for d in all_days:
     #         for s in all_categories:
@@ -186,17 +188,17 @@ def main():
             # members can not work shift P and A consecutively
             if d < num_days - 1:
                 model.Add((shifts[(n, d, 2)] + shifts[(n, d + 1, 1)]) < 2)
-            # members work at most 4 consecutive days
-            if d < num_days - max_days:
+            # members work at most 5 consecutive days
+            if d < num_days - 6:
                 sum_worked_days = 0
-                for i in range(0, max_days):
-                    sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)]
-                model.Add(sum_worked_days < max_days)
+                for i in range(0, 6):
+                    sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)] + shifts[(n, d + i, 3)] + shifts[(n, d + i, 4)] + shifts[(n, d + i, 6)]
+                model.Add(sum_worked_days < 6)
             # in 2 weeks, members work at most 10 days
             if d < num_days - 14:
                 sum_worked_days = 0
                 for i in range(0, 14):
-                    sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)]
+                    sum_worked_days = sum_worked_days + shifts[(n, d + i, 1)] + shifts[(n, d + i, 2)] + shifts[(n, d + i, 3)] + shifts[(n, d + i, 4)] + shifts[(n, d + i, 6)]
                 model.Add(sum_worked_days <= 10)
 
     for n in all_members:
@@ -216,6 +218,8 @@ def main():
         model.Add(sum(shifts[(n, d, 4)] for d in all_days) == sum(requests[(n, d, 4)] for d in all_days))
         # 연차 = 5, should exactly match the number requested
         model.Add(sum(shifts[(n, d, 5)] for d in all_days) == sum(requests[(n, d, 5)] for d in all_days))
+        # D = 6, should exactly match the number requested
+        model.Add(sum(shifts[(n, d, 6)] for d in all_days) == sum(requests[(n, d, 6)] for d in all_days))
 
     # special requests '박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경'
     # like balance between A and P 
