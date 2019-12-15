@@ -3,8 +3,10 @@ from ortools.sat.python import cp_model
 import csv
 import datetime
 import calendar
+import xlsxwriter
 
 first_day = datetime.datetime(2020, 1, 1)
+day_offs = [4, 5, 11, 12, 18, 19, 23, 24, 25, 26]
 
 # names of working members (VETERANS SHOULD BE AT THE LEFT OF ROW)
 names = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경']
@@ -47,82 +49,105 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     def on_solution_callback(self):
         if self._solution_count in self._solutions:
             print('Solution %i' % self._solution_count)
-            with open('employee_file{}.csv'.format(self._solution_count), newline="\n", mode='w', encoding='utf-8') as employee_file:
-                employee_writer = csv.writer(
-                    employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL
-                )
-                # days = list(range(1, self._num_days + 1))
-                # days = [first_day += datetime.timedelta(days = i) for i in range(0, self._num_days)]
-                days = []
-                weekdays = []
-                the_day = datetime.datetime(self._first_day.year, self._first_day.month, self._first_day.day)
-                i = 0
-                while i < self._num_days:
-                    days.append(the_day.day)
-                    weekdays.append(dayName(the_day.weekday()))
-                    the_day += datetime.timedelta(days = 1)
-                    i += 1
+            # Create an new Excel file and convert the text data.
+            workbook = xlsxwriter.Workbook('solution_{}.xlsx'.format(self._solution_count))
+            worksheet = workbook.add_worksheet()
+            worksheet.set_column('B:AZ', 4)
+            # Start from the first cell.
+            row = 0
+            col = 0
 
-                days.insert(0, ' ')
-                employee_writer.writerow(days)
+            lines = []
 
-                weekdays.insert(0, ' ')
-                categories_row = categories.copy()
-                categories_row.insert(0, ' ')
-                titles = weekdays + categories_row
-                employee_writer.writerow(titles)
-                shiftsA = { day: 0 for day in range(self._num_days) }
-                shiftsP = { day: 0 for day in range(self._num_days) }
+            days = []
+            weekdays = []
+            the_day = datetime.datetime(self._first_day.year, self._first_day.month, self._first_day.day)
+            i = 0
+            while i < self._num_days:
+                days.append(the_day.day)
+                weekdays.append(dayName(the_day.weekday()))
+                the_day += datetime.timedelta(days = 1)
+                i += 1
 
-                for n in range(self._num_members):
-                    row_shifts = []
-                    summary = { category: 0 for category in range(len(categories)) } 
-                    row_shifts.append(self._names[n])
-                    # python has NO switch statements!
-                    for d in range(self._num_days):
-                        if self.Value(self._shifts[(n, d, 0)]):
-                            row_shifts.append('X')
-                            summary[0] += 1
-                            # print('%s day %i X' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 1)]):
-                            row_shifts.append('A')
-                            shiftsA[d] += 1
-                            summary[1] += 1
-                            # print('%s day %i A' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 2)]):
-                            row_shifts.append('P')
-                            shiftsP[d] += 1
-                            summary[2] += 1
-                            # print('%s day %i P' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 3)]):
-                            row_shifts.append('출장')
-                            summary[3] += 1
-                            # print('%s day %i 출장' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 4)]):
-                            row_shifts.append('교육')
-                            summary[4] += 1
-                            # print('%s day %i 교육' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 5)]):
-                            row_shifts.append('연차')
-                            summary[5] += 1
-                            # print('%s day %i 연차' % (names[n], d))
-                        if self.Value(self._shifts[(n, d, 6)]):
-                            row_shifts.append('D')
-                            summary[6] += 1
-                    row_shifts.append('')
-                    print(summary)
-                    row_shifts += summary.values()
-                    employee_writer.writerow(row_shifts)
-                
-                employee_writer.writerow([''])
-                rowA = []
-                rowA.append('A')
-                rowA += shiftsA.values()
-                employee_writer.writerow(rowA)
-                rowP = []
-                rowP.append('P')
-                rowP += shiftsP.values()
-                employee_writer.writerow(rowP)
+            days.insert(0, ' ')
+            lines.append(days)
+
+            weekdays.insert(0, ' ')
+            categories_row = categories.copy()
+            categories_row.insert(0, ' ')
+            titles = weekdays + categories_row
+            lines.append(titles)
+            
+            shiftsA = { day: 0 for day in range(self._num_days) }
+            shiftsP = { day: 0 for day in range(self._num_days) }
+
+            for n in range(self._num_members):
+                row_shifts = []
+                summary = { category: 0 for category in range(len(categories)) } 
+                row_shifts.append(self._names[n])
+                # python has NO switch statements!
+                for d in range(self._num_days):
+                    if self.Value(self._shifts[(n, d, 0)]):
+                        row_shifts.append('X')
+                        summary[0] += 1
+                        # print('%s day %i X' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 1)]):
+                        row_shifts.append('A')
+                        shiftsA[d] += 1
+                        summary[1] += 1
+                        # print('%s day %i A' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 2)]):
+                        row_shifts.append('P')
+                        shiftsP[d] += 1
+                        summary[2] += 1
+                        # print('%s day %i P' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 3)]):
+                        row_shifts.append('출장')
+                        summary[3] += 1
+                        # print('%s day %i 출장' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 4)]):
+                        row_shifts.append('교육')
+                        summary[4] += 1
+                        # print('%s day %i 교육' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 5)]):
+                        row_shifts.append('연차')
+                        summary[5] += 1
+                        # print('%s day %i 연차' % (names[n], d))
+                    if self.Value(self._shifts[(n, d, 6)]):
+                        row_shifts.append('D')
+                        summary[6] += 1
+                row_shifts.append('')
+                print(summary)
+                row_shifts += summary.values()
+                lines.append(row_shifts)
+            
+            lines.append([''])
+
+            rowA = []
+            rowA.append('A')
+            rowA += shiftsA.values()
+            lines.append(rowA)
+            
+            rowP = []
+            rowP.append('P')
+            rowP += shiftsP.values()
+            lines.append(rowP)
+            # print(lines)
+            for line in lines:
+                print(line)
+                col = 0
+                for item in line:
+                    cell_format = workbook.add_format()
+                    cell_format.set_border()
+                    cell_format.set_align('center')
+                    if col in day_offs:
+                        cell_format.set_bg_color('orange')
+                    # Write any other lines to the worksheet.
+                    worksheet.write(row, col, item, cell_format)
+                    col += 1
+
+                row += 1
+            workbook.close()
 
         self._solution_count += 1
 
