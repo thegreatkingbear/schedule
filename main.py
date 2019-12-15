@@ -95,8 +95,9 @@ def main():
     num_members = len(names)
     num_veterans = len(veterans)
     max_days = 5
-    min_shifts_per_member = 20
-    max_shifts_per_member = 20
+    num_X = 11
+    min_shifts_per_member = num_days - num_X
+    max_shifts_per_member = num_days - num_X 
     num_categories = len(categories)
 
     all_members = range(num_members)
@@ -125,6 +126,15 @@ def main():
     requests[(1, 7, 4)] = 1
     requests[(1, 8, 4)] = 1
     requests[(1, 9, 4)] = 1
+    requests[(1, 23, 1)] = 1
+    requests[(1, 24, 1)] = 1
+    requests[(1, 25, 0)] = 1
+    requests[(1, 26, 0)] = 1
+    requests[(1, 27, 0)] = 1
+    requests[(1, 28, 0)] = 1
+    requests[(1, 29, 1)] = 1
+    requests[(1, 30, 1)] = 1
+    requests[(3, 0, 0)] = 1
     requests[(3, 5, 4)] = 1
     requests[(3, 6, 4)] = 1
     requests[(3, 7, 4)] = 1
@@ -191,11 +201,13 @@ def main():
 
     for n in all_members:
         # minimum working days: all categories except X take up at least 20 days
-        model.Add(min_shifts_per_member <= sum(shifts[(n, d, s)] for d in all_days for s in worked_categories))
+        # model.Add(num_X == sum(shifts[(n, d, 0)] for d in all_days))
+        model.Add(min_shifts_per_member == sum(shifts[(n, d, s)] for d in all_days for s in worked_categories))
         # maximum working days: all working categories take up at most 22 days
-        model.Add(sum(shifts[(n, d, 0)] for d in all_days) <= max_shifts_per_member)
-        model.Add(sum(shifts[(n, d, 1)] for d in all_days) <= max_shifts_per_member)
-        model.Add(sum(shifts[(n, d, 2)] for d in all_days) <= max_shifts_per_member)
+        # model.Add(sum(shifts[(n, d, s)] for d in all_days for s in worked_categories) <= max_shifts_per_member)
+        # model.Add(sum(shifts[(n, d, 0)] for d in all_days) <= max_shifts_per_member)
+        # model.Add(sum(shifts[(n, d, 1)] for d in all_days) <= max_shifts_per_member)
+        # model.Add(sum(shifts[(n, d, 2)] for d in all_days) <= max_shifts_per_member)
         # all days are required to be scheduled
         model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_categories) == num_days)
         # 출장 = 3, should exactly match the number requested
@@ -209,20 +221,20 @@ def main():
     # like balance between A and P 
  
     # 박호원
-    model.Add(sum(shifts[(0, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(0, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(0, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(0, d, 2)] for d in all_days) > 6)
 
     # 이보람
-    model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 6)
 
     # 정형섭
-    model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 6)
 
     # 남영선
-    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 6)
 
     # 양혜경 wants all P shifts, in other words no A shifts
     model.Add(sum(shifts[(4, d, 1)] for d in all_days) == 0)
@@ -230,34 +242,39 @@ def main():
     # model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 7)
     
     # 이찬희
-    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 6)
 
     # 이장훈
-    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 6)
 
     # 조인경
-    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 7)
-    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 6)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 6)
 
     # last day last month P => NO A on the first day 
     model.Add(shifts[(0, 0, 1)] == 0)
     model.Add(shifts[(1, 0, 1)] == 0)
     model.Add(shifts[(3, 0, 1)] == 0)
 
-    max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
-    model.Maximize(max_condition)
+    # max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
+    # model.Maximize(max_condition)
+    for n in all_members:
+        for d in all_days:
+            for s in all_categories:
+                if requests[(n, d, s)]:
+                    model.Add(shifts[(n, d, s)] == 1)
 
     solver = cp_model.CpSolver()
     # solver.parameters.linearization_level = 1
-    solver.parameters.max_time_in_seconds = 30.0
-    a_few_solutions = range(5)
+    solver.parameters.max_time_in_seconds = 10.0
+    a_few_solutions = range(10)
     solution_printer = MembersPartialSolutionPrinter(
         shifts, num_members, num_days, a_few_solutions, names
     )
-    # solver.SearchForAllSolutions(model, solution_printer)
-    solver.SolveWithSolutionCallback(model, solution_printer)
+    solver.SearchForAllSolutions(model, solution_printer)
+    # solver.SolveWithSolutionCallback(model, solution_printer)
 
     print()
     print('Statistics')
