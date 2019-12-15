@@ -70,7 +70,7 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                             row_shifts.append('연차')
                             summary[5] += 1
                             # print('%s day %i 연차' % (names[n], d))
-                    row_shifts.append(' ')
+                    row_shifts.append('')
                     print(summary)
                     row_shifts += summary.values()
                     employee_writer.writerow(row_shifts)
