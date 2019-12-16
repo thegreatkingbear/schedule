@@ -134,7 +134,7 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
             lines.append(rowP)
             # print(lines)
             for line in lines:
-                print(line)
+                # print(line)
                 col = 0
                 for item in line:
                     cell_format = workbook.add_format()
@@ -199,12 +199,26 @@ def main():
     requests[(1, 28, 0)] = 1
     requests[(1, 29, 1)] = 1
     requests[(1, 30, 1)] = 1
+    requests[(2, 11, 0)] = 1
+    requests[(2, 16, 1)] = 1
+    requests[(2, 17, 0)] = 1
+    requests[(2, 23, 1)] = 1
+    requests[(2, 24, 0)] = 1
+    requests[(2, 25, 0)] = 1
+    requests[(2, 26, 0)] = 1
     requests[(3, 0, 0)] = 1
     requests[(3, 5, 4)] = 1
     requests[(3, 6, 4)] = 1
     requests[(3, 7, 4)] = 1
     requests[(3, 8, 4)] = 1
     requests[(3, 9, 4)] = 1
+    requests[(3, 11, 1)] = 1
+    requests[(3, 12, 0)] = 1
+    requests[(3, 13, 0)] = 1
+    requests[(3, 14, 0)] = 1
+    requests[(3, 15, 0)] = 1
+    requests[(3, 16, 5)] = 1
+    requests[(3, 17, 2)] = 1
     requests[(4, 0, 2)] = 1
     requests[(4, 20, 5)] = 1
     requests[(4, 25, 2)] = 1
@@ -217,6 +231,18 @@ def main():
     requests[(5, 15, 0)] = 1
     requests[(5, 16, 0)] = 1
     requests[(6, 9, 6)] = 1
+    requests[(6, 10, 0)] = 1
+    requests[(6, 11, 0)] = 1
+    requests[(6, 17, 0)] = 1
+    requests[(6, 27, 0)] = 1
+    requests[(6, 28, 0)] = 1
+    requests[(7, 0, 2)] = 1
+    requests[(7, 2, 0)] = 1
+    requests[(7, 11, 5)] = 1
+    requests[(7, 12, 0)] = 1
+    requests[(7, 13, 0)] = 1
+    requests[(7, 14, 0)] = 1
+    requests[(7, 15, 0)] = 1
     # for n in all_members:
     #     for d in all_days:
     #         for s in all_categories:
@@ -289,12 +315,12 @@ def main():
     # like balance between A and P 
  
     # 박호원
-    model.Add(sum(shifts[(0, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(0, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(0, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(0, d, 2)] for d in all_days) > 5)
 
     # 이보람
-    model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(1, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(1, d, 2)] for d in all_days) > 5)
     model.Add(shifts[(1, 3, 2)] == 0)
     model.Add(shifts[(1, 4, 2)] == 0)
     model.Add(shifts[(1, 10, 2)] == 0)
@@ -303,12 +329,12 @@ def main():
     model.Add(shifts[(1, 18, 2)] == 0)
 
     # 정형섭
-    model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 5)
 
     # 남영선
-    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 5)
 
     # 양혜경 wants all P shifts, in other words no A shifts
     model.Add(sum(shifts[(4, d, 1)] for d in all_days) == 0)
@@ -316,16 +342,16 @@ def main():
     # model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 7)
     
     # 이찬희
-    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 5)
 
     # 이장훈
-    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 5)
 
     # 조인경
-    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 6)
-    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 6)
+    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 5)
 
     # last day last month P => NO A on the first day 
     model.Add(shifts[(0, 0, 1)] == 0)
