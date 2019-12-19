@@ -141,6 +141,11 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
                     cell_format = workbook.add_format()
                     cell_format.set_border()
                     cell_format.set_align('center')
+                    if row >= 2 and row < len(names) + 2 and col >= 1 and col <= 31:
+                        sum_requests = sum(self._requests[(row - 2, col - 1, s)] for s in range(len(categories)))
+                        # print(row - 2, col, sum_requests)
+                        if sum_requests > 0:
+                            cell_format.set_font_color('red')
                     if col in day_offs:
                         cell_format.set_bg_color('orange')
                     # Write any other lines to the worksheet.
@@ -191,14 +196,10 @@ def main():
     requests[(1, 7, 4)] = 1
     requests[(1, 8, 4)] = 1
     requests[(1, 9, 4)] = 1
-    requests[(1, 23, 1)] = 1
-    requests[(1, 24, 1)] = 1
     requests[(1, 25, 0)] = 1
     requests[(1, 26, 0)] = 1
     requests[(1, 27, 0)] = 1
     requests[(1, 28, 0)] = 1
-    requests[(1, 29, 1)] = 1
-    requests[(1, 30, 1)] = 1
     requests[(2, 11, 0)] = 1
     requests[(2, 16, 1)] = 1
     requests[(2, 17, 0)] = 1
@@ -314,6 +315,10 @@ def main():
     model.Add(shifts[(1, 11, 2)] == 0)
     model.Add(shifts[(1, 17, 2)] == 0)
     model.Add(shifts[(1, 18, 2)] == 0)
+    model.Add(shifts[(1, 23, 1)] == 1)
+    model.Add(shifts[(1, 24, 1)] == 1)
+    model.Add(shifts[(1, 29, 1)] == 1)
+    model.Add(shifts[(1, 30, 1)] == 1)
 
     # 정형섭
     model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 5)
