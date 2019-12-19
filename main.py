@@ -232,7 +232,6 @@ def main():
     requests[(6, 13, 0)] = 1
     requests[(6, 14, 0)] = 1
     requests[(6, 15, 0)] = 1
-    
     # for n in all_members:
     #     for d in all_days:
     #         for s in all_categories:
@@ -256,7 +255,6 @@ def main():
         else:
             model.Add(sum(shifts[(n, d, 1)] for n in all_members) >= 2)
         model.Add(sum(shifts[(n, d, 2)] for n in all_members) >= 2)
-        # model.Add(sum(shifts[(n, 11, 1)] for n in all_members) >= 1)
         # at least one veteran for a shift a day
         model.Add(sum(shifts[(n, d, 1)] for n in veteran_members) > 0)
         model.Add(sum(shifts[(n, d, 2)] for n in veteran_members) > 0)
@@ -317,8 +315,8 @@ def main():
     model.Add(shifts[(1, 18, 2)] == 0)
     model.Add(shifts[(1, 23, 1)] == 1)
     model.Add(shifts[(1, 24, 1)] == 1)
-    model.Add(shifts[(1, 29, 1)] == 1)
-    model.Add(shifts[(1, 30, 1)] == 1)
+    model.Add(shifts[(1, 29, 2)] == 1)
+    model.Add(shifts[(1, 30, 2)] == 1)
 
     # 정형섭
     model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 5)
@@ -328,8 +326,8 @@ def main():
     model.Add(sum(shifts[(3, d, 1)] for d in all_days) == 0)
     
     # 이찬희
-    model.Add(sum(shifts[(4, d, 1)] for d in all_days) > 8)
-    model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 3)
+    model.Add(sum(shifts[(4, d, 1)] for d in range(0, 10)) > 8)
+    model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 5)
 
     # 이장훈
     model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 5)
