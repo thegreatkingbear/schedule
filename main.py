@@ -6,11 +6,11 @@ import calendar
 import xlsxwriter
 
 first_day = datetime.datetime(2020, 1, 1)
-day_offs = [4, 5, 11, 12, 18, 19, 23, 24, 25, 26]
+day_offs = [4, 5, 11, 12, 18, 19, 24, 25, 26, 27]
 
 # names of working members (VETERANS SHOULD BE AT THE LEFT OF ROW)
-names = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희', '이장훈', '조인경']
-veterans = ['박호원', '이보람', '정형섭', '남영선', '양혜경', '이찬희']
+names = ['박호원', '이보람', '정형섭', '양혜경', '이찬희', '이장훈', '조인경']
+veterans = ['박호원', '이보람', '정형섭', '양혜경', '이찬희']
 
 # schedule numbers
 # 0 = X, 1 = A, 2 = P, 3 = 출장, 4 = 교육, 5 = 연차, 6 = D
@@ -36,7 +36,7 @@ def dayName(weekday):
 class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
     """Print intermediate solutions."""
 
-    def __init__(self, shifts, num_members, num_days, sols, names, first_day):
+    def __init__(self, shifts, num_members, num_days, sols, names, first_day, requests):
         cp_model.CpSolverSolutionCallback.__init__(self)
         self._shifts = shifts
         self._num_members = num_members
@@ -45,6 +45,7 @@ class MembersPartialSolutionPrinter(cp_model.CpSolverSolutionCallback):
         self._solution_count = 0
         self._names = names
         self._first_day = first_day
+        self._requests = requests
 
     def on_solution_callback(self):
         if self._solution_count in self._solutions:
@@ -160,8 +161,7 @@ def main():
     num_days = calendar.monthrange(first_day.year, first_day.day)[1]
     num_members = len(names)
     num_veterans = len(veterans)
-    num_X = 11
-    min_shifts_per_member = num_days - num_X
+    min_shifts_per_member = 20
     num_categories = len(categories)
 
     all_members = range(num_members)
@@ -178,7 +178,7 @@ def main():
         for d in all_days:
             for s in all_categories:
                 requests[(n, d, s)] = 0
-    
+
     # specific request here / [(names, days, categories)]
     requests[(0, 22, 0)] = 1
     requests[(0, 23, 0)] = 1
@@ -206,43 +206,32 @@ def main():
     requests[(2, 24, 0)] = 1
     requests[(2, 25, 0)] = 1
     requests[(2, 26, 0)] = 1
-    requests[(3, 0, 0)] = 1
-    requests[(3, 5, 4)] = 1
-    requests[(3, 6, 4)] = 1
-    requests[(3, 7, 4)] = 1
-    requests[(3, 8, 4)] = 1
-    requests[(3, 9, 4)] = 1
-    requests[(3, 11, 1)] = 1
-    requests[(3, 12, 0)] = 1
+    requests[(3, 0, 2)] = 1
     requests[(3, 13, 0)] = 1
-    requests[(3, 14, 0)] = 1
-    requests[(3, 15, 0)] = 1
-    requests[(3, 16, 5)] = 1
-    requests[(3, 17, 2)] = 1
-    requests[(4, 0, 2)] = 1
-    requests[(4, 20, 5)] = 1
-    requests[(4, 25, 2)] = 1
-    requests[(4, 26, 2)] = 1
-    requests[(5, 10, 5)] = 1
-    requests[(5, 11, 5)] = 1
-    requests[(5, 12, 5)] = 1
-    requests[(5, 13, 0)] = 1
-    requests[(5, 14, 0)] = 1
-    requests[(5, 15, 0)] = 1
-    requests[(5, 16, 0)] = 1
-    requests[(6, 9, 6)] = 1
-    requests[(6, 10, 0)] = 1
-    requests[(6, 11, 0)] = 1
-    requests[(6, 17, 0)] = 1
-    requests[(6, 27, 0)] = 1
-    requests[(6, 28, 0)] = 1
-    requests[(7, 0, 2)] = 1
-    requests[(7, 2, 0)] = 1
-    requests[(7, 11, 5)] = 1
-    requests[(7, 12, 0)] = 1
-    requests[(7, 13, 0)] = 1
-    requests[(7, 14, 0)] = 1
-    requests[(7, 15, 0)] = 1
+    requests[(3, 20, 5)] = 1
+    requests[(3, 25, 2)] = 1
+    requests[(3, 26, 2)] = 1
+    requests[(4, 10, 5)] = 1
+    requests[(4, 11, 5)] = 1
+    requests[(4, 12, 5)] = 1
+    requests[(4, 13, 0)] = 1
+    requests[(4, 14, 0)] = 1
+    requests[(4, 15, 0)] = 1
+    requests[(4, 16, 0)] = 1
+    requests[(5, 9, 6)] = 1
+    requests[(5, 10, 0)] = 1
+    requests[(5, 11, 0)] = 1
+    requests[(5, 17, 0)] = 1
+    requests[(5, 27, 0)] = 1
+    requests[(5, 28, 0)] = 1
+    requests[(6, 0, 2)] = 1
+    requests[(6, 2, 0)] = 1
+    requests[(6, 11, 5)] = 1
+    requests[(6, 12, 0)] = 1
+    requests[(6, 13, 0)] = 1
+    requests[(6, 14, 0)] = 1
+    requests[(6, 15, 0)] = 1
+    
     # for n in all_members:
     #     for d in all_days:
     #         for s in all_categories:
@@ -261,8 +250,12 @@ def main():
 
     # constraint: on 1 day at same shift, more than 2 members work
     for d in all_days:
-        model.Add(sum(shifts[(n, d, 1)] for n in all_members) >= 2)
+        if d == 11:
+            model.Add(sum(shifts[(n, d, 1)] for n in all_members) >= 1)
+        else:
+            model.Add(sum(shifts[(n, d, 1)] for n in all_members) >= 2)
         model.Add(sum(shifts[(n, d, 2)] for n in all_members) >= 2)
+        # model.Add(sum(shifts[(n, 11, 1)] for n in all_members) >= 1)
         # at least one veteran for a shift a day
         model.Add(sum(shifts[(n, d, 1)] for n in veteran_members) > 0)
         model.Add(sum(shifts[(n, d, 2)] for n in veteran_members) > 0)
@@ -293,13 +286,7 @@ def main():
 
     for n in all_members:
         # minimum working days: all categories except X take up at least 20 days
-        # model.Add(num_X == sum(shifts[(n, d, 0)] for d in all_days))
         model.Add(min_shifts_per_member == sum(shifts[(n, d, s)] for d in all_days for s in worked_categories))
-        # maximum working days: all working categories take up at most 22 days
-        # model.Add(sum(shifts[(n, d, s)] for d in all_days for s in worked_categories) <= max_shifts_per_member)
-        # model.Add(sum(shifts[(n, d, 0)] for d in all_days) <= max_shifts_per_member)
-        # model.Add(sum(shifts[(n, d, 1)] for d in all_days) <= max_shifts_per_member)
-        # model.Add(sum(shifts[(n, d, 2)] for d in all_days) <= max_shifts_per_member)
         # all days are required to be scheduled
         model.Add(sum(shifts[(n, d, s)] for d in all_days for s in all_categories) == num_days)
         # 출장 = 3, should exactly match the number requested
@@ -332,22 +319,16 @@ def main():
     model.Add(sum(shifts[(2, d, 1)] for d in all_days) > 5)
     model.Add(sum(shifts[(2, d, 2)] for d in all_days) > 5)
 
-    # 남영선
-    model.Add(sum(shifts[(3, d, 1)] for d in all_days) > 5)
-    model.Add(sum(shifts[(3, d, 2)] for d in all_days) > 5)
-
     # 양혜경 wants all P shifts, in other words no A shifts
-    model.Add(sum(shifts[(4, d, 1)] for d in all_days) == 0)
-    # model.Add(sum(shifts[(4, d, 1)] for d in all_days) > 7)
-    # model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 7)
+    model.Add(sum(shifts[(3, d, 1)] for d in all_days) == 0)
     
     # 이찬희
-    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 5)
-    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 5)
+    model.Add(sum(shifts[(4, d, 1)] for d in all_days) > 8)
+    model.Add(sum(shifts[(4, d, 2)] for d in all_days) > 3)
 
     # 이장훈
-    model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 5)
-    model.Add(sum(shifts[(6, d, 2)] for d in all_days) > 5)
+    model.Add(sum(shifts[(5, d, 1)] for d in all_days) > 5)
+    model.Add(sum(shifts[(5, d, 2)] for d in all_days) > 5)
 
     # 조인경
     model.Add(sum(shifts[(6, d, 1)] for d in all_days) > 5)
@@ -356,7 +337,6 @@ def main():
     # last day last month P => NO A on the first day 
     model.Add(shifts[(0, 0, 1)] == 0)
     model.Add(shifts[(1, 0, 1)] == 0)
-    model.Add(shifts[(3, 0, 1)] == 0)
 
     # max_condition = sum(requests[(n, d, s)] * shifts[(n, d, s)] for n in all_members for d in all_days for s in all_categories)
     # model.Maximize(max_condition)
@@ -371,7 +351,7 @@ def main():
     solver.parameters.max_time_in_seconds = 10.0
     a_few_solutions = range(10)
     solution_printer = MembersPartialSolutionPrinter(
-        shifts, num_members, num_days, a_few_solutions, names, first_day
+        shifts, num_members, num_days, a_few_solutions, names, first_day, requests
     )
     solver.SearchForAllSolutions(model, solution_printer)
     # solver.SolveWithSolutionCallback(model, solution_printer)
